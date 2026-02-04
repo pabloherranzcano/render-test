@@ -4,6 +4,7 @@ const cors = require('cors')
 
 app.use(cors())
 app.use(express.json());
+app.use(express.static('dist'))
 
 const PORT = process.env.PORT || 3001
 
@@ -85,24 +86,36 @@ app.post('/api/notes', (request, response) => {
 })
 
 app.put('/api/notes/:id', (request, response) => {
-  const body = request.body
+  const id = request.params.id;
+  const body = request.body;
 
+  // Validar que el contenido esté presente
   if (!body.content) {
     return response.status(400).json({
       error: 'content missing'
-    })
+    });
   }
 
-  const note = {
+  // Buscar la nota por id
+  const noteIndex = notes.findIndex(note => note.id === id);
+  if (noteIndex === -1) {
+    return response.status(404).json({
+      error: 'note not found'
+    });
+  }
+
+  // Actualizar la nota existente
+  const updatedNote = {
+    ...notes[noteIndex],  // Mantener campos existentes como id
     content: body.content,
     important: Boolean(body.important) || false,
-    id: generateId(),
-  }
+  };
 
-  notes = notes.concat(note)
+  // Reemplazar en el array
+  notes[noteIndex] = updatedNote;
 
-  response.json(note)
-})
+  response.json(updatedNote);
+});
 
 app.delete('/api/notes/:id', (request, response) => {
   const id = Number(request.params.id);
