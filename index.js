@@ -86,7 +86,7 @@ app.post('/api/notes', (request, response) => {
 })
 
 app.put('/api/notes/:id', (request, response) => {
-  const id = request.params.id;
+  const id = Number(request.params.id);
   const body = request.body;
 
   // Validar que el contenido esté presente
