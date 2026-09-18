@@ -5,10 +5,11 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+const distPath = path.join(__dirname, 'dist');
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('build'));
+app.use(express.static(distPath));
 
 morgan.token('body', (req, res) => {
   return req.method === 'POST' ? JSON.stringify(req.body) : '';
@@ -116,6 +117,18 @@ app.delete('/api/persons/:id', (request, response) => {
   writeDb(db);
 
   response.status(204).end();
+});
+
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (request, response) => {
+  response.status(204).end();
+});
+
+app.get('*', (request, response) => {
+  if (request.path.startsWith('/api')) {
+    return response.status(404).end();
+  }
+
+  response.sendFile(path.join(distPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
