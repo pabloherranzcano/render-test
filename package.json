@@ -1,7 +1,15 @@
 {
-  "name": "back",
+  "name": "fullstackopen-part3",
   "version": "0.0.1",
   "description": "",
+  "homepage": "https://github.com/pabloherranzcano/fullstackopen-part3#readme",
+  "bugs": {
+    "url": "https://github.com/pabloherranzcano/fullstackopen-part3/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pabloherranzcano/fullstackopen-part3.git"
+  },
   "license": "ISC",
   "author": "",
   "type": "commonjs",
@@ -12,8 +20,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "morgan": "^1.10.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

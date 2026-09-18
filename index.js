@@ -1,131 +1,124 @@
 const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
-const cors = require('cors')
 
-app.use(cors())
+app.use(cors());
 app.use(express.json());
-app.use(express.static('dist'))
 
-const PORT = process.env.PORT || 3001
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
-
-const requestLogger = (request, response, next) => {
-  console.log('Method:', request.method)
-  console.log('Path:  ', request.path)
-  console.log('Body:  ', request.body)
-  console.log('---')
-  next()
-}
-
-app.use(requestLogger);
-
-let notes = [
-  {
-    id: 1,
-    content: 'HTML is easy',
-    important: true,
-  },
-  {
-    id: 2,
-    content: 'Browser can execute only JavaScript',
-    important: false,
-  },
-  {
-    id: 3,
-    content: 'GET and POST are the most important methods of HTTP protocol',
-    important: true,
-  },
-];
-app.get('/', (request, response) => {
-  response.send('<h1>Hello World!</h1>');
+morgan.token('body', (req, res) => {
+  return req.method === 'POST' ? JSON.stringify(req.body) : '';
 });
 
-app.get('/api/notes', (request, response) => {
-  response.json(notes);
+// Log format (tiny) including the body for POST requests
+app.use(
+  morgan(':method :url :status :res[content-length] - :response-time ms :body'),
+);
+
+const dbPath = path.join(__dirname, '../db.json');
+
+const readDb = () => {
+  const data = fs.readFileSync(dbPath, 'utf8');
+  return JSON.parse(data);
+};
+
+const writeDb = (data) => {
+  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+};
+
+app.get('/api/persons', (request, response) => {
+  const db = readDb();
+  response.json(db.persons);
 });
 
-app.get('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const note = notes.find((note) => note.id === id);
+app.get('/api/persons/:id', (request, response) => {
+  const db = readDb();
+  const person = db.persons.find((p) => p.id === request.params.id);
 
-  if (note) {
-    response.json(note);
+  if (person) {
+    response.json(person);
   } else {
     response.status(404).end();
   }
 });
 
-const generateId = () => {
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => n.id))
-    : 0
-  return maxId + 1
-}
-
-app.post('/api/notes', (request, response) => {
-  const body = request.body
-
-  if (!body.content) {
-    return response.status(400).json({
-      error: 'content missing'
-    })
-  }
-
-  const note = {
-    content: body.content,
-    important: Boolean(body.important) || false,
-    id: generateId(),
-  }
-
-  notes = notes.concat(note)
-
-  response.json(note)
-})
-
-app.put('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id);
+app.post('/api/persons', (request, response) => {
   const body = request.body;
 
-  // Validar que el contenido esté presente
-  if (!body.content) {
+  if (!body.name) {
     return response.status(400).json({
-      error: 'content missing'
+      error: 'name missing',
     });
   }
 
-  // Buscar la nota por id
-  const noteIndex = notes.findIndex(note => note.id === id);
-  if (noteIndex === -1) {
-    return response.status(404).json({
-      error: 'note not found'
+  if (!body.number) {
+    return response.status(400).json({
+      error: 'number missing',
     });
   }
 
-  // Actualizar la nota existente
-  const updatedNote = {
-    ...notes[noteIndex],  // Mantener campos existentes como id
-    content: body.content,
-    important: Boolean(body.important) || false,
+  const db = readDb();
+
+  const newPerson = {
+    name: body.name,
+    number: body.number,
+    id: Math.random().toString(16).slice(2),
   };
 
-  // Reemplazar en el array
-  notes[noteIndex] = updatedNote;
+  db.persons.push(newPerson);
+  writeDb(db);
 
-  response.json(updatedNote);
+  response.json(newPerson);
 });
 
-app.delete('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id);
-  notes = notes.filter((note) => note.id !== id);
+app.put('/api/persons/:id', (request, response) => {
+  const body = request.body;
+
+  if (!body.name) {
+    return response.status(400).json({
+      error: 'name missing',
+    });
+  }
+
+  if (!body.number) {
+    return response.status(400).json({
+      error: 'number missing',
+    });
+  }
+
+  const db = readDb();
+  const person = db.persons.find((p) => p.id === request.params.id);
+
+  if (!person) {
+    return response.status(404).end();
+  }
+
+  person.name = body.name;
+  person.number = body.number;
+
+  writeDb(db);
+  response.json(person);
+});
+
+app.delete('/api/persons/:id', (request, response) => {
+  const db = readDb();
+  const index = db.persons.findIndex((p) => p.id === request.params.id);
+
+  if (index === -1) {
+    return response.status(404).end();
+  }
+
+  db.persons.splice(index, 1);
+  writeDb(db);
 
   response.status(204).end();
 });
 
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: 'unknown endpoint' })
-}
+const PORT = process.env.PORT || 3001;
 
-app.use(unknownEndpoint)
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
