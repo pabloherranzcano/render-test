@@ -31,6 +31,14 @@ const writeDb = (data) => {
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 };
 
+app.get('/info', (request, response) => {
+  const db = readDb();
+  response.send(
+    `<p>Phonebook has info for ${db.persons.length} people</p>
+    <p>${new Date()}</p>`,
+  );
+});
+
 app.get('/api/persons', (request, response) => {
   const db = readDb();
   response.json(db.persons);
