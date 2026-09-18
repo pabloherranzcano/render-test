@@ -20,7 +20,7 @@ app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :body'),
 );
 
-const dbPath = path.join(__dirname, '../db.json');
+const dbPath = path.join(__dirname, './db.json');
 
 const readDb = () => {
   const data = fs.readFileSync(dbPath, 'utf8');
@@ -123,9 +123,9 @@ app.get('/.well-known/appspecific/com.chrome.devtools.json', (request, response)
   response.status(204).end();
 });
 
-app.get('*', (request, response) => {
-  if (request.path.startsWith('/api')) {
-    return response.status(404).end();
+app.use((request, response, next) => {
+  if (request.path.startsWith('/api') || request.path.startsWith('/.well-known')) {
+    return next();
   }
 
   response.sendFile(path.join(distPath, 'index.html'));
