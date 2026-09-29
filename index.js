@@ -5,7 +5,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const fs = require('fs');
 const path = require('path');
 const Person = require('./models/person');
 const mongoose = require('mongoose');
@@ -23,7 +22,7 @@ mongoose.connect(url);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(distPath));
-morgan.token('body', (req, res) => {
+morgan.token('body', (req) => {
   return req.method === 'POST' ? JSON.stringify(req.body) : '';
 });
 
@@ -32,7 +31,7 @@ app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms :body'),
 );
 
-app.get('/info', (request, response) => {
+app.get('/info', (request, response, next) => {
   Person.countDocuments({})
     .then((count) => {
       response.send(
@@ -124,9 +123,9 @@ app.put('/api/persons/:id', (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then((result) => response.status(204).end())
+    .then(() => response.status(204).end())
     .catch((error) => next(error));
 });
 
