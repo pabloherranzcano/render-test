@@ -28,14 +28,17 @@ const person = new Person({
   number: newPersonNumber,
 });
 
-person.save().then((result) => {
-  console.log(`Added ${newPerson} number ${newPersonNumber} to phonebook`);
-  mongoose.connection.close();
-});
-
-// Person.find({}).then(result => {
-//   result.forEach(person => {
-//     console.log(person)
-//   })
-//   mongoose.connection.close()
-// })
+if (process.argv.length === 3) {
+  Person.find({}).then((result) => {
+    console.log('phonebook:');
+    result.forEach((person) => {
+      console.log(`${person.name} ${person.number}`);
+    });
+    mongoose.connection.close();
+  });
+} else {
+  person.save().then((result) => {
+    console.log(`Added ${newPerson} number ${newPersonNumber} to phonebook`);
+    mongoose.connection.close();
+  });
+}
